@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import PlaceCard from '../components/PlaceCard';
 import { places } from '../data/dummyData';
 import { StatusBar } from 'expo-status-bar';
+import { AuthContext } from '../../App';
 
 // Favorite place item that looks like a song in Apple Music
 const FavoritePlaceItem = ({ place, onPress, index }) => {
@@ -44,6 +45,7 @@ const PlaylistItem = ({ playlist, onPress }) => {
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const { logout } = useContext(AuthContext);
   
   // Mock user data
   const [user, setUser] = useState({
@@ -92,6 +94,31 @@ const ProfileScreen = () => {
     navigation.navigate('CurateResults', { experience: playlist });
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Log Out",
+          onPress: () => {
+            try {
+              // Use the logout function from AuthContext
+              logout();
+            } catch (error) {
+              console.error('Error logging out:', error);
+              Alert.alert('Error', 'Failed to log out. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -101,9 +128,17 @@ const ProfileScreen = () => {
         <View style={styles.profileHeader}>
           <Image source={{ uri: user.avatar }} style={styles.profileImage} />
           <Text style={styles.profileName}>{user.name}</Text>
-          <TouchableOpacity style={styles.editProfileButton}>
-            <Text style={styles.editProfileText}>Edit Profile</Text>
-          </TouchableOpacity>
+          <View style={styles.profileButtonsRow}>
+            <TouchableOpacity style={styles.editProfileButton}>
+              <Text style={styles.editProfileText}>Edit Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutText}>Log Out</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         
         {/* Favorite Places Section */}
@@ -193,15 +228,34 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 10,
   },
+  profileButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 5,
+  },
   editProfileButton: {
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#3498db',
+    borderColor: 'rgba(150, 80, 170, 0.8)',
+    marginRight: 10,
   },
   editProfileText: {
-    color: '#3498db',
+    color: 'rgba(150, 80, 170, 0.8)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  logoutButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e74c3c',
+  },
+  logoutText: {
+    color: '#e74c3c',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -223,7 +277,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   seeAllText: {
-    color: '#3498db',
+    color: 'rgba(150, 80, 170, 0.8)',
     fontSize: 15,
   },
   
@@ -263,17 +317,17 @@ const styles = StyleSheet.create({
   
   // Category Badge
   categoryBadge: {
-    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+    backgroundColor: 'rgba(150, 80, 170, 0.2)',
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 12,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: 'rgba(52, 152, 219, 0.4)',
+    borderColor: 'rgba(150, 80, 170, 0.4)',
   },
   categoryText: {
     fontSize: 12,
-    color: '#3498db',
+    color: 'rgba(150, 80, 170, 0.8)',
     fontWeight: '500',
   },
   

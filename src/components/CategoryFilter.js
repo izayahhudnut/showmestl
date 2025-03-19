@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedCategory: {
-    backgroundColor: '#3498db',
+    backgroundColor: 'rgba(150, 80, 170, 0.8)',
     height: 36,
   },
   categoryText: {

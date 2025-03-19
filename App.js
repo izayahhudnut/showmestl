@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { View, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity, Text, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import colors from './src/config/theme';
+
+// Apply default props to fix placeholder text spacing issues
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  allowFontScaling: false,
+  spellCheck: false,
+  autoCorrect: false,
+  fontFamily: Platform.OS === 'ios' ? 'System' : 'normal',
+  letterSpacing: 0, // Prevent weird character spacing
+};
 
 // Import original screens
 import DiscoverScreen from './src/screens/DiscoverScreen';
@@ -18,7 +31,12 @@ import EventsScreen from './src/screens/EventsScreen';
 
 // Import new screens
 import SearchScreen from './src/screens/SearchScreen';
-import FavoritesScreen from './src/screens/FavoritesScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+
+// Import auth screens
+import AuthWelcomeScreen from './src/screens/AuthWelcomeScreen';
+import PhoneAuthScreen from './src/screens/PhoneAuthScreen';
+import VerifyCodeScreen from './src/screens/VerifyCodeScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -62,8 +80,8 @@ const TabBar = ({ state, descriptors, navigation }) => {
             iconName = isFocused ? 'search' : 'search-outline';
           } else if (route.name === 'Curate') {
             iconName = isFocused ? 'sparkles' : 'sparkles-outline';
-          } else if (route.name === 'Favorites') {
-            iconName = isFocused ? 'heart' : 'heart-outline';
+          } else if (route.name === 'Profile') {
+            iconName = isFocused ? 'person' : 'person-outline';
           } else if (route.name === 'Events') {
             iconName = isFocused ? 'calendar' : 'calendar-outline';
           }
@@ -131,23 +149,7 @@ const SearchStack = () => (
   </Stack.Navigator>
 );
 
-// Favorites stack navigator
-const FavoritesStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
-    <Stack.Screen name="FavoritesMain" component={FavoritesScreen} />
-    <Stack.Screen 
-      name="PlaceDetail" 
-      component={PlaceDetailScreen} 
-      options={{
-        animation: 'slide_from_right',
-      }}
-    />
-  </Stack.Navigator>
-);
+
 
 // Curate stack navigator
 const CurateStack = () => (
@@ -173,26 +175,135 @@ const EventsStack = () => (
   </Stack.Navigator>
 );
 
+// Profile stack navigator
+const ProfileStack = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+    <Stack.Screen 
+      name="PlaceDetail" 
+      component={PlaceDetailScreen} 
+      options={{
+        animation: 'slide_from_right',
+      }}
+    />
+    <Stack.Screen 
+      name="CurateResults" 
+      component={CurateResultsScreen} 
+      options={{
+        animation: 'slide_from_right',
+      }}
+    />
+  </Stack.Navigator>
+);
+
+// Auth Stack Navigator
+const AuthStack = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen name="Welcome" component={AuthWelcomeScreen} />
+    <Stack.Screen name="PhoneAuth" component={PhoneAuthScreen} />
+    <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
+  </Stack.Navigator>
+);
+
+// Main App with Tabs
+const MainApp = () => (
+  <Tab.Navigator
+    tabBar={props => <TabBar {...props} />}
+    screenOptions={{
+      headerShown: false,
+      tabBarShowLabel: false,
+    }}
+  >
+    <Tab.Screen name="For You" component={DiscoverStack} />
+    <Tab.Screen name="Search" component={SearchStack} />
+    <Tab.Screen name="Curate" component={CurateStack} />
+    <Tab.Screen name="Events" component={EventsStack} />
+    <Tab.Screen name="Profile" component={ProfileStack} />
+  </Tab.Navigator>
+);
+
+// Create a context to manage auth state globally
+import { createContext } from 'react';
+export const AuthContext = createContext();
+
+// Root Navigator
+const RootNavigator = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  const checkAuth = async () => {
+    try {
+      const authStatus = await AsyncStorage.getItem('isAuthenticated');
+      setIsAuthenticated(authStatus === 'true');
+    } catch (error) {
+      console.log('Error checking auth status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to handle logout
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem('isAuthenticated');
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.log('Error during logout:', error);
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    // You could show a splash screen here
+    return null;
+  }
+
+  // Create auth context value
+  const authContext = {
+    isAuthenticated,
+    login: async () => {
+      await AsyncStorage.setItem('isAuthenticated', 'true');
+      setIsAuthenticated(true);
+    },
+    logout,
+  };
+
+  return (
+    <AuthContext.Provider value={authContext}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <Stack.Screen name="MainApp" component={MainApp} />
+        ) : (
+          <Stack.Screen name="Auth" component={AuthStack} />
+        )}
+      </Stack.Navigator>
+    </AuthContext.Provider>
+  );
+};
+
 export default function App() {
   return (
-    <NavigationContainer>
-      <StatusBar style="light" />
-      <Tab.Navigator
-        tabBar={props => <TabBar {...props} />}
-        screenOptions={{
-          headerShown: false,
-          tabBarShowLabel: false,
-        }}
-      >
-        <Tab.Screen name="For You" component={DiscoverStack} />
-        <Tab.Screen name="Search" component={SearchStack} />
-        <Tab.Screen name="Curate" component={CurateStack} />
-        <Tab.Screen name="Favorites" component={FavoritesStack} />
-        <Tab.Screen name="Events" component={EventsStack} />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
+
 
 const styles = StyleSheet.create({
   tabBarContainer: {

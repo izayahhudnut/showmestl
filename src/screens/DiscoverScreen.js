@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, SafeAreaView, Dimensions, FlatList } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { places } from '../data/dummyData';
 
-const CategoryCard = ({ image, title, onPress }) => (
+// Import local image assets
+const categoryImages = {
+  'Food & Drink': require('../../assets/art/food.webp'),
+  'Museums': require('../../assets/art/musuems.jpg'),
+  'Parks & Nature': require('../../assets/art/park.jpg'),
+};
+
+const CategoryCard = ({ image, title, onPress, useLocalImage = false }) => (
   <TouchableOpacity style={styles.categoryCard} onPress={onPress}>
-    <Image source={{ uri: image }} style={styles.categoryImage} />
+    <Image 
+      source={useLocalImage ? image : { uri: image }} 
+      style={styles.categoryImage} 
+    />
     <View style={styles.categoryOverlay}>
       <Text style={styles.categoryTitle}>{title}</Text>
     </View>
@@ -20,43 +30,104 @@ const PlaceCard = ({ place, onPress }) => (
   </TouchableOpacity>
 );
 
-const ExperienceCard = ({ image, title, subtitle }) => (
-  <TouchableOpacity style={styles.experienceCard}>
-    <Image source={{ uri: image }} style={styles.experienceImage} />
-    <Text style={styles.experienceTitle}>{title}</Text>
-    <Text style={styles.experienceSubtitle}>{subtitle}</Text>
-  </TouchableOpacity>
-);
+// Helper function to get the correct image based on index
+const getExperienceImage = (index) => {
+  switch (index) {
+    case 1:
+      return require('../../assets/art/1.png');
+    case 2:
+      return require('../../assets/art/2.png');
+    case 3:
+      return require('../../assets/art/3.png');
+    case 4:
+      return require('../../assets/art/4.png');
+    case 5:
+      return require('../../assets/art/5.png');
+    default:
+      return require('../../assets/placeholder.png');
+  }
+};
 
-const PlaylistView = ({ title, places, navigation, onBackPress }) => (
-  <SafeAreaView style={styles.container}>
+const ExperienceCard = ({ index, title, subtitle }) => {
+  return (
+    <TouchableOpacity style={styles.experienceCard}>
+      <Image source={getExperienceImage(index)} style={styles.experienceImage} />
+      <Text style={styles.experienceTitle}>{title}</Text>
+      <Text style={styles.experienceSubtitle}>{subtitle}</Text>
+    </TouchableOpacity>
+  );
+};
 
-  <View style={styles.playlistContainer}>
-    <View style={styles.playlistHeader}>
-      <TouchableOpacity onPress={onBackPress}>
-        <Text style={styles.backButton}>← Back</Text>
-      </TouchableOpacity>
-      <Text style={styles.playlistTitle}>{title}</Text>
+
+const renderTikTokView = ({ item, navigation, category }) => {
+  return (
+    <View style={styles.tikTokContainer}>
+      <View style={styles.tikTokCard}>
+        <View style={styles.tikTokImageContainer}>
+          <TouchableOpacity 
+            style={styles.tikTokImageTouchable}
+            onPress={() => navigation.navigate('PlaceDetail', { place: item })}
+          >
+            <View style={styles.tikTokImage}>
+              <Image 
+                source={{ uri: item.image }} 
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+              <View style={styles.tikTokImageOverlay} />
+            </View>
+            
+            <View style={styles.tikTokContent}>
+              <Text style={styles.tikTokName}>{item.name}</Text>
+              <View style={styles.tikTokCategoryBadge}>
+                <Text style={styles.tikTokCategoryText}>{item.category}</Text>
+              </View>
+              
+              <View style={styles.tikTokRatingContainer}>
+                <Text style={styles.tikTokRating}>★ {item.rating || "4.5"}</Text>
+              </View>
+              
+              {item.address ? (
+                <Text style={styles.tikTokAddress} numberOfLines={1}>
+                  {item.address}
+                </Text>
+              ) : null}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
-    <ScrollView contentContainerStyle={styles.playlistItemsContainer}>
-      {places.map(place => (
-        <TouchableOpacity 
-          key={place.id} 
-          style={styles.playlistItem}
-          onPress={() => navigation.navigate('PlaceDetail', { place })}
-        >
-          <Image source={{ uri: place.image }} style={styles.playlistItemImage} />
-          <View style={styles.playlistItemContent}>
-            <Text style={styles.playlistItemTitle}>{place.name}</Text>
-            <Text style={styles.playlistItemSubtitle}>{place.address}</Text>
-            <Text style={styles.playlistItemRating}>★ {place.rating}</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  </View>
-</SafeAreaView>
-);
+  );
+};
+
+const PlaylistView = ({ title, places, navigation, onBackPress }) => {
+  const { width } = Dimensions.get('window');
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.playlistContainer}>
+        <View style={styles.playlistHeader}>
+          <TouchableOpacity onPress={onBackPress}>
+            <Text style={styles.backButton}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.playlistTitle}>{title}</Text>
+        </View>
+        
+        <FlatList
+          data={places}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => renderTikTokView({ item, navigation, category: title })}
+          snapToInterval={width}
+          decelerationRate="fast"
+          pagingEnabled
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{flex: 1}}
+        />
+      </View>
+    </SafeAreaView>
+  );
+};
 
 const DiscoverScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -104,27 +175,24 @@ const DiscoverScreen = ({ navigation }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryContainer}
         >
-          {foodSample && (
-            <CategoryCard 
-              image={foodSample.image}
-              title="Food & Drink" 
-              onPress={() => setSelectedCategory('Food & Drink')}
-            />
-          )}
-          {museumSample && (
-            <CategoryCard 
-              image={museumSample.image}
-              title="Museums" 
-              onPress={() => setSelectedCategory('Museums')}
-            />
-          )}
-          {parkSample && (
-            <CategoryCard 
-              image={parkSample.image}
-              title="Parks & Nature" 
-              onPress={() => setSelectedCategory('Parks & Nature')}
-            />
-          )}
+          <CategoryCard 
+            image={categoryImages['Food & Drink']}
+            title="Food & Drink" 
+            onPress={() => setSelectedCategory('Food & Drink')}
+            useLocalImage={true}
+          />
+          <CategoryCard 
+            image={categoryImages['Museums']}
+            title="Museums" 
+            onPress={() => setSelectedCategory('Museums')}
+            useLocalImage={true}
+          />
+          <CategoryCard 
+            image={categoryImages['Parks & Nature']}
+            title="Parks & Nature" 
+            onPress={() => setSelectedCategory('Parks & Nature')}
+            useLocalImage={true}
+          />
         </ScrollView>
 
         {/* Food & Drink Section */}
@@ -184,17 +252,17 @@ const DiscoverScreen = ({ navigation }) => {
           
           <View style={styles.experiencesGrid}>
             <ExperienceCard 
-              image={parkSample ? parkSample.image : 'https://via.placeholder.com/300'}
+              index={1}
               title="Nature Day" 
               subtitle="Explore St. Louis parks" 
             />
             <ExperienceCard 
-              image={museumSample ? museumSample.image : 'https://via.placeholder.com/300'}
+              index={2}
               title="Art & Culture" 
               subtitle="Museums and galleries" 
             />
             <ExperienceCard 
-              image={foodSample ? foodSample.image : 'https://via.placeholder.com/300'}
+              index={3}
               title="Foodie Tour" 
               subtitle="Local restaurants and bars" 
             />
@@ -271,7 +339,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 16,
-    color: '#3498db',
+    color: '#FFFFFF',
   },
   placesContainer: {
     paddingBottom: 10,
@@ -339,6 +407,7 @@ const styles = StyleSheet.create({
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backButton: {
     fontSize: 16,
@@ -349,42 +418,87 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  playlistItemsContainer: {
-    padding: 15,
-  },
-  playlistItem: {
-    flexDirection: 'row',
-    backgroundColor: '#1e1e1e',
-    borderRadius: 10,
-    marginBottom: 15,
-    padding: 10,
-    overflow: 'hidden',
-  },
-  playlistItemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-  },
-  playlistItemContent: {
     flex: 1,
-    marginLeft: 15,
-    justifyContent: 'space-between',
   },
-  playlistItemTitle: {
-    fontSize: 18,
+  
+  
+  // TikTok style view
+  tikTokContainer: {
+    width: Dimensions.get('window').width,
+    height: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 0,
+  },
+  tikTokCard: {
+    width: '100%',
+    height: '95%',
+    backgroundColor: '#1e1e1e',
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 5,
+  },
+  tikTokImageContainer: {
+    flex: 1,
+  },
+  tikTokImageTouchable: {
+    flex: 1,
+  },
+  tikTokImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  tikTokImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(10, 10, 10, 0.5)',
+  },
+  tikTokContent: {
+    position: 'absolute',
+    bottom: 40,
+    left: 10,
+    right: 10,
+    padding: 15,
+    borderRadius: 12,
+  },
+  tikTokName: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#ffffff',
+    marginBottom: 8,
   },
-  playlistItemSubtitle: {
-    fontSize: 14,
-    color: '#dddddd',
-    marginTop: 4,
+  tikTokCategoryBadge: {
+    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 152, 219, 0.4)',
   },
-  playlistItemRating: {
+  tikTokCategoryText: {
     fontSize: 14,
+    color: '#3498db',
+    fontWeight: '500',
+  },
+  tikTokRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tikTokRating: {
+    fontSize: 16,
     color: '#ffb700',
-    marginTop: 4,
+  },
+  tikTokAddress: {
+    fontSize: 16,
+    color: '#dddddd',
   },
 });
 

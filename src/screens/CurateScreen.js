@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image, Modal, TextInput, Keyboard } from 'react-native';
+import Button from '../components/Button';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import CurateModal from '../components/CurateModal';
@@ -160,7 +161,7 @@ const CurateScreen = ({ navigation }) => {
             style={styles.newButton}
             onPress={() => setStartModalVisible(true)}
           >
-            <Ionicons name="add-circle" size={24} color="#3498db" />
+            <Ionicons name="add-circle" size={24} color="rgba(150, 80, 170, 0.8)" />
             <Text style={styles.newButtonText}>New</Text>
           </TouchableOpacity>
         </View>
@@ -176,12 +177,11 @@ const CurateScreen = ({ navigation }) => {
               Create curated experiences by selecting places to visit in St. Louis.
               Share your favorite spots with friends or plan your next adventure.
             </Text>
-            <TouchableOpacity 
-              style={styles.createButton}
+            <Button 
+              title="Create Experience"
               onPress={() => setStartModalVisible(true)}
-            >
-              <Text style={styles.createButtonText}>Create Experience</Text>
-            </TouchableOpacity>
+              style={styles.createButton}
+            />
           </View>
         ) : (
           <>
@@ -353,13 +353,12 @@ const CurateScreen = ({ navigation }) => {
               <Text style={styles.exampleItem}>• Cultural day visiting museums and landmarks</Text>
             </View>
             
-            <TouchableOpacity
-              style={[styles.submitButton, !userPrompt ? styles.submitButtonDisabled : null]}
+            <Button
+              title="Create My Experience"
               onPress={handleSubmitPrompt}
+              style={[styles.submitButton, !userPrompt ? styles.submitButtonDisabled : null]}
               disabled={!userPrompt}
-            >
-              <Text style={styles.submitButtonText}>Create My Experience</Text>
-            </TouchableOpacity>
+            />
           </View>
         </TouchableOpacity>
       </Modal>
@@ -401,7 +400,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 16,
     fontWeight: '500',
-    color: '#3498db',
+    color: 'rgba(150, 80, 170, 0.8)',
   },
   sectionContainer: {
     marginTop: 25,
@@ -420,7 +419,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 16,
-    color: '#3498db',
+    color: 'rgba(150, 80, 170, 0.8)',
   },
   experienceCard: {
     backgroundColor: '#1e1e1e',
@@ -524,11 +523,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   createButton: {
-    backgroundColor: '#3498db',
-    borderRadius: 30,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    alignItems: 'center',
+    width: '100%',
   },
   createButtonText: {
     color: 'white',
@@ -654,6 +649,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlignVertical: 'top',
     marginBottom: 20,
+    paddingHorizontal: 15,
+    paddingTop: 15,
   },
   examplesContainer: {
     width: '100%',
@@ -672,15 +669,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   submitButton: {
-    backgroundColor: '#3498db',
-    borderRadius: 30,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
     width: '100%',
-    alignItems: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: '#2a2a2a',
+    opacity: 0.5,
   },
   submitButtonText: {
     color: 'white',
@@ -706,6 +698,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     height: '100%',
+    paddingVertical: 8,
+    paddingLeft: 0,
+    paddingRight: 8,
   },
   noResultsContainer: {
     alignItems: 'center',

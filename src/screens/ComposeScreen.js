@@ -811,6 +811,7 @@ const ComposeScreen = ({ navigation, route }) => {
             onScrollBeginDrag={dismissKeyboard}
             scrollEventThrottle={16}
           >
+            
             <TouchableWithoutFeedback onPress={dismissKeyboard}>
               <View style={styles.touchableWrapper}>
                 <View style={styles.titleSection}>
@@ -870,9 +871,6 @@ const ComposeScreen = ({ navigation, route }) => {
                 </View>
                 
                 {/* Places selection comes later */}
-                
-                
-                
                 <View style={styles.placesListContainer}>
                   {steps.map((step, index) => (
                     <StepCard
@@ -1368,6 +1366,8 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderBottomWidth: 1, // Changed to only bottom border
     borderBottomColor: 'rgba(255, 255, 255, 0.15)', // Subtle bottom border
+    height: 75, // Fixed height to prevent spacing issues
+    minHeight: 75,
   },
   
   // Map styles
